@@ -17,9 +17,9 @@ Welcome to the official setup guide for the **Sip & Scroll** marketing landing p
 
 ### Step 2: Add your Brand Logo Image
 For the branding and logo images to display properly inside the header and footer:
-1. Locate your logo image asset file named **`image_7a7285.jpg`**.
+1. Locate your logo image asset file named **`logo.jpeg`**.
 2. Drag or move that image file into the **exact same folder** where you just saved your `index.html` file.
-3. *Crucial:* Ensure the file name matches perfectly (`image_7a7285.jpg`). If it's a `.png` or named differently, change its name to match or the website won't find it.
+3. *Crucial:* Ensure the file name matches perfectly (`logo.jpeg`). If it's a `.png` or named differently, change its name to match or the website won't find it.
 
 ### Step 3: Open the Website in a Browser
 1. Double-click your newly created **`index.html`** file.
