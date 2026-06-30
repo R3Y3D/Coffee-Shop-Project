@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sip & Scroll | Discover Local Hidden Cafés</title>
-    <!-- Tailwind CSS for sleek layout layouts -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for clean icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        coffeeBrand: '#9A4B37',      /* Terracotta from image_7a7285.jpg logo */
-                        coffeeCream: '#FDFBF7',      /* Cream background/accents */
-                        coffeeDark: '#2E1A16',       /* Deep warm dark tone */
+                        coffeeBrand: '#9A4B37',
+                        coffeeCream: '#FDFBF7',
+                        coffeeDark: '#2E1A16',
                         coffeeMutedDark: '#4A332E',
                     }
                 }
@@ -28,15 +28,22 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #FDFBF7;
         }
+        .leaflet-bar {
+            border: none !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        }
+        .leaflet-bar a {
+            background-color: #FDFBF7 !important;
+            color: #2E1A16 !important;
+            border-bottom: 1px solid #E5E7EB !important;
+        }
     </style>
 </head>
 <body class="text-coffeeDark antialiased selection:bg-coffeeBrand selection:text-white">
 
-    <!-- Header / Navigation -->
     <header class="sticky top-0 z-50 bg-coffeeCream/90 backdrop-blur-md border-b border-coffeeBrand/10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <!-- Your uploaded logo -->
                 <img src="logo.jpeg" alt="Sip & Scroll Logo" class="h-12 w-12 rounded-xl object-cover border border-coffeeBrand/20 shadow-sm">
                 <span class="text-2xl font-bold tracking-tight text-coffeeBrand">Sip & Scroll</span>
             </div>
@@ -53,13 +60,12 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
     <section class="relative bg-coffeeBrand text-coffeeCream overflow-hidden py-20 lg:py-32">
         <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
                 <span class="inline-block bg-white/10 text-white border border-white/20 px-4 py-1.5 rounded-full text-sm font-medium tracking-wide uppercase">
-                    ☕ The Ultimate Café Discover + Promotion Platform
+                    📍 Precise Location Pinpoint Radar
                 </span>
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
                     Stop scrolling aimlessly.<br><span class="text-amber-200">Start sipping perfectly.</span>
@@ -76,31 +82,35 @@
                     </a>
                 </div>
             </div>
+            
             <div class="lg:col-span-5 flex justify-center relative">
-                <!-- App Mockup Concept Frame representing the active community grid mapping inside SS15 (referenced in image_7a7210.jpg) -->
                 <div class="relative w-72 h-[580px] bg-coffeeDark rounded-[40px] p-3 shadow-2xl border-4 border-white/20">
                     <div class="w-full h-full bg-coffeeCream rounded-[32px] overflow-hidden flex flex-col justify-between p-4 relative">
-                        <!-- Top Bar -->
                         <div class="flex justify-between items-center text-xs font-bold text-coffeeBrand px-1">
                             <span>⚡ Sip & Scroll</span>
-                            <span class="bg-coffeeBrand/10 px-2 py-0.5 rounded-full text-[10px]">SS15, Subang</span>
+                            <span id="current-badge" class="bg-coffeeBrand/10 text-coffeeBrand px-2 py-0.5 rounded-full text-[10px] max-w-[120px] truncate transition-all">Locating...</span>
                         </div>
                         
-                        <!-- Mini Map Visual Overlay Reference mapping to image_7a7210.jpg -->
-                        <div class="my-3 bg-stone-200 rounded-xl flex-1 flex flex-col items-center justify-center p-2 relative overflow-hidden group border border-coffeeBrand/10">
-                            <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image: url('image_7a7210.jpg');"></div>
-                            <span class="z-10 text-[11px] font-bold text-coffeeDark bg-white/90 px-3 py-1 rounded-full shadow-sm text-center">
-                                <i class="fa-solid fa-location-dot text-coffeeBrand mr-1"></i> Exploring Hidden Gems
-                            </span>
+                        <div class="my-3 bg-stone-200 rounded-xl flex-1 flex flex-col relative overflow-hidden border border-coffeeBrand/10 min-h-[260px]">
+                            <div id="liveMockupMap" class="absolute inset-0 w-full h-full z-0"></div>
+                            
+                            <div class="absolute top-2 left-2 right-2 z-[1000] flex gap-1 shadow-md">
+                                <input id="location-input" type="text" placeholder="Type neighborhood or city..." class="w-full text-[10px] text-coffeeDark bg-white/95 px-2 py-1.5 rounded-lg border-none focus:outline-none focus:ring-1 focus:ring-coffeeBrand font-medium">
+                                <button id="find-cafes-btn" class="bg-coffeeBrand text-white text-[10px] font-bold px-2 rounded-lg hover:bg-coffeeDark transition-colors flex items-center justify-center min-w-[28px]">
+                                    <i id="search-icon" class="fa-solid fa-magnifying-glass"></i>
+                                </button>
+                                <button id="gps-trigger-btn" title="Pinpoint My Coordinates" class="bg-emerald-600 text-white text-[10px] font-bold px-2 rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center min-w-[28px]">
+                                    <i class="fa-solid fa-location-crosshairs"></i>
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Mini Reel Item representation mimicking image_7a7209.png and image_7a722c.jpg features -->
-                        <div class="bg-white p-3 rounded-xl shadow-sm border border-coffeeBrand/5 space-y-2">
+                        <div class="bg-white p-3 rounded-xl shadow-sm border border-coffeeBrand/5 space-y-1.5 z-10">
                             <div class="flex items-center gap-2">
                                 <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                <span class="text-[10px] font-bold uppercase text-stone-400">Trending Reel Review</span>
+                                <span class="text-[10px] font-bold uppercase text-stone-400 tracking-wider">Live Pinpoint Radar</span>
                             </div>
-                            <p class="text-xs font-semibold text-coffeeDark">"Found the most aesthetic matcha spot behind SS15 layout layout..."</p>
+                            <p id="dynamic-reel-text" class="text-xs font-semibold text-coffeeDark leading-snug">Accept the location prompt or type an area to pull real active cafes with precise distance calculations.</p>
                             <div class="flex justify-between items-center text-[10px] text-coffeeBrand font-medium bg-coffeeBrand/5 p-1.5 rounded-md">
                                 <span>✨ Watch & Earn Points</span>
                                 <span class="font-bold">+20 pts</span>
@@ -112,7 +122,6 @@
         </div>
     </section>
 
-    <!-- Concept Section -->
     <section id="concept" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
             <h2 class="text-xs uppercase font-bold tracking-widest text-coffeeBrand">Core Ecosystem</h2>
@@ -133,7 +142,7 @@
                     <i class="fa-solid fa-calendar-check"></i>
                 </div>
                 <h3 class="text-xl font-bold text-coffeeDark mb-3">Instant Seat Booking</h3>
-                <p class="text-stone-500 leading-relaxed text-sm">Need a quiet space for group study near Swinburne or remote workspace? Secure slots immediately with our intuitive built-in booking engine.</p>
+                <p class="text-stone-500 leading-relaxed text-sm">Secure premium study spots or remote workspace modules immediately with our intuitive built-in booking engine.</p>
             </div>
             <div class="bg-white p-8 rounded-2xl shadow-sm border border-coffeeBrand/5 hover:border-coffeeBrand/20 transition-all group">
                 <div class="w-12 h-12 rounded-xl bg-coffeeBrand/10 flex items-center justify-center text-coffeeBrand text-xl font-bold mb-6 group-hover:bg-coffeeBrand group-hover:text-white transition-all">
@@ -145,58 +154,178 @@
         </div>
     </section>
 
-    <!-- Special Features Section (Reels & Reviews) -->
-    <section id="features" class="py-20 bg-stone-50 border-y border-stone-200/60">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div class="space-y-6">
-                <span class="text-xs uppercase font-bold tracking-widest text-coffeeBrand bg-coffeeBrand/10 px-3 py-1 rounded-full">Watch. Review. Claim.</span>
-                <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-coffeeDark">The Reels & Rewards Section</h2>
-                <p class="text-stone-600 leading-relaxed">
-                    Interactive short-form video reviews allow you to peek directly into the café ambience before stepping out. Better yet, uploading your own honest review clips or engaging with content rewards you instantly with community points and dining vouchers.
-                </p>
-                <div class="space-y-4 pt-2">
-                    <div class="flex gap-4 items-start">
-                        <div class="text-emerald-600 mt-1"><i class="fa-solid fa-circle-check text-lg"></i></div>
-                        <div>
-                            <h4 class="font-bold text-coffeeDark">Earn Vouchers Instantly</h4>
-                            <p class="text-stone-500 text-sm">Turn valid views into actual item discounts at your favorite neighborhood hideouts.</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4 items-start">
-                        <div class="text-emerald-600 mt-1"><i class="fa-solid fa-circle-check text-lg"></i></div>
-                        <div>
-                            <h4 class="font-bold text-coffeeDark">Ambience Over Ads</h4>
-                            <p class="text-stone-500 text-sm">Authentic user generated media helps verify exact seating configurations and quiet levels.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Interactive UI elements mapping image_7a722c.jpg notes -->
-            <div class="bg-white border border-stone-200 p-6 rounded-2xl shadow-xl space-y-6">
-                <h3 class="font-bold text-lg text-coffeeDark border-b pb-3">User Special Mechanics Showcase</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="p-4 bg-coffeeCream rounded-xl border border-coffeeBrand/10 text-center">
-                        <span class="block font-bold text-xl text-coffeeBrand">Random Seat</span>
-                        <span class="text-xs text-stone-500">Quick-booking option for adventurous study sessions</span>
-                    </div>
-                    <div class="p-4 bg-coffeeCream rounded-xl border border-coffeeBrand/10 text-center">
-                        <span class="block font-bold text-xl text-coffeeBrand">Birthday Reward</span>
-                        <span class="text-xs text-stone-500">Complimentary hand-brewed drink or pastry bundle</span>
-                    </div>
-                    <div class="p-4 bg-coffeeCream rounded-xl border border-coffeeBrand/10 text-center">
-                        <span class="block font-bold text-xl text-coffeeBrand">Early Access</span>
-                        <span class="text-xs text-stone-500">Exclusive priority sampling for newly introduced seasonal dishes</span>
-                    </div>
-                    <div class="p-4 bg-coffeeCream rounded-xl border border-coffeeBrand/10 text-center">
-                        <span class="block font-bold text-xl text-coffeeBrand">GPS Sync</span>
-                        <span class="text-xs text-stone-500">Directly optimized apple/google routing map integration</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentLat = 3.0792;
+            let currentLng = 101.5927;
 
-    <!-- Membership Plans Section -->
+            // Initialize baseline map engine configuration
+            const map = L.map('liveMockupMap', {
+                zoomControl: false, 
+                attributionControl: false
+            }).setView([currentLat, currentLng], 14);
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            let markerGroup = L.layerGroup().addTo(map);
+            let userLocationMarker = null;
+            let boundaryCircle = null;
+
+            // Custom pins setup to separate User Center vs Nearby Cafes
+            const userIcon = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            const cafeIcon = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [21, 34],
+                iconAnchor: [10, 34],
+                popupAnchor: [1, -30],
+                shadowSize: [34, 34]
+            });
+
+            // Primary processing block to query real Overpass OpenStreetMap database nodes
+            async function fetchCafesInRadius(lat, lon, locationLabel) {
+                const searchBtn = document.getElementById('find-cafes-btn');
+                const searchIcon = document.getElementById('search-icon');
+                
+                searchIcon.className = "fa-solid fa-spinner animate-spin";
+                searchBtn.disabled = true;
+
+                try {
+                    document.getElementById('current-badge').innerText = locationLabel;
+                    document.getElementById('dynamic-reel-text').innerText = `Pinpointed! Here are all actual cafés queried live inside a 5KM boundary of the current center point.`;
+
+                    map.flyTo([lat, lon], 13, { duration: 1.2 });
+                    markerGroup.clearLayers();
+
+                    // Drops custom center pinpoint indicator
+                    if (userLocationMarker) map.removeLayer(userLocationMarker);
+                    userLocationMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map);
+                    userLocationMarker.bindPopup("<div class='text-xs font-bold font-sans text-center text-blue-800'>Search Center Location</div>").openPopup();
+
+                    // Render 5KM boundary visual guide ring
+                    if (boundaryCircle) map.removeLayer(boundaryCircle);
+                    boundaryCircle = L.circle([lat, lon], {
+                        radius: 5000, 
+                        color: '#9A4B37',
+                        fillColor: '#9A4B37',
+                        fillOpacity: 0.05,
+                        weight: 1.5,
+                        dashArray: '4, 4'
+                    }).addTo(map);
+
+                    // Call Live Overpass API fetching actual real nodes
+                    const overpassUrl = `https://overpass-api.de/api/interpreter?data=[out:json][timeout:25];node["amenity"="cafe"](around:5000,${lat},${lon});out;`;
+                    const overpassResponse = await fetch(overpassUrl);
+                    const overpassData = await overpassResponse.json();
+
+                    if (overpassData.elements && overpassData.elements.length > 0) {
+                        const limitedElements = overpassData.elements.slice(0, 30);
+                        
+                        limitedElements.forEach(element => {
+                            const cLat = element.lat;
+                            const cLon = element.lon;
+                            const cName = element.tags.name || "Cozy Local Café";
+                            const cCuisine = element.tags.cuisine ? `Specialty: ${element.tags.cuisine}` : "Aesthetic Coffee Shop";
+
+                            // Precision pinpoint distance formatting calculation
+                            const distanceMeter = map.distance([lat, lon], [cLat, cLon]);
+                            const distanceKM = (distanceMeter / 1000).toFixed(2);
+
+                            const marker = L.marker([cLat, cLon], {icon: cafeIcon}).addTo(markerGroup);
+                            
+                            // Injects beautiful pin descriptions with real relative metrics and external link directions
+                            marker.bindPopup(`
+                                <div class="p-2 font-sans min-w-[140px]">
+                                    <p class="font-bold text-xs text-coffeeBrand mb-0.5 leading-tight">${cName}</p>
+                                    <p class="text-[10px] text-stone-500 mb-1 font-medium">${cCuisine}</p>
+                                    <div class="flex items-center gap-1 text-[9px] bg-stone-100 px-1.5 py-0.5 rounded text-stone-700 font-semibold mb-1 w-fit">
+                                        <i class="fa-solid fa-location-dot text-coffeeBrand"></i>
+                                        <span>${distanceKM} KM away</span>
+                                    </div>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cName + ' ' + locationLabel)}" 
+                                       target="_blank" 
+                                       class="block text-center bg-coffeeBrand text-white text-[9px] font-bold py-1 px-2 rounded hover:bg-coffeeDark transition-colors mt-1.5 !text-white no-underline">
+                                       Open Directions Map
+                                    </a>
+                                </div>
+                            `);
+                        });
+                    } else {
+                        document.getElementById('dynamic-reel-text').innerText = "No actual cafés are registered inside this 5KM radius zone.";
+                    }
+                } catch (error) {
+                    console.error("API Fetch Exception Encountered:", error);
+                } finally {
+                    searchIcon.className = "fa-solid fa-magnifying-glass";
+                    searchBtn.disabled = false;
+                }
+            }
+
+            async function parseStringLocation(inputString) {
+                if (!inputString) return;
+                try {
+                    const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(inputString + ' Malaysia')}&limit=1`;
+                    const geoResponse = await fetch(geoUrl);
+                    const geoData = await geoResponse.json();
+
+                    if (geoData && geoData.length > 0) {
+                        const lat = parseFloat(geoData[0].lat);
+                        const lon = parseFloat(geoData[0].lon);
+                        const displayName = geoData[0].display_name.split(',')[0];
+                        fetchCafesInRadius(lat, lon, displayName);
+                    } else {
+                        alert("Location target context not matched. Please check spelling.");
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            function triggerLiveGPSPinpoint() {
+                if (navigator.geolocation) {
+                    document.getElementById('current-badge').innerText = "Locating GPS...";
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            fetchCafesInRadius(lat, lon, "My Location");
+                        },
+                        (error) => {
+                            console.warn("GPS Access not allowed. Booting default layout view.", error);
+                            fetchCafesInRadius(currentLat, currentLng, "Subang Jaya");
+                        },
+                        { enableHighAccuracy: true, timeout: 8000 }
+                    );
+                } else {
+                    fetchCafesInRadius(currentLat, currentLng, "Subang Jaya");
+                }
+            }
+
+            document.getElementById('find-cafes-btn').addEventListener('click', function() {
+                parseStringLocation(document.getElementById('location-input').value);
+            });
+
+            document.getElementById('location-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') parseStringLocation(this.value);
+            });
+
+            document.getElementById('gps-trigger-btn').addEventListener('click', triggerLiveGPSPinpoint);
+
+            // Execute auto-onboarding geolocation radar scan upon initialization entry
+            triggerLiveGPSPinpoint();
+        });
+    </script>
+
     <section id="membership" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <h2 class="text-xs uppercase font-bold tracking-widest text-coffeeBrand">Premium Tiers</h2>
@@ -205,7 +334,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
-            <!-- Free Tier -->
             <div class="bg-white p-6 rounded-2xl border border-stone-200 flex flex-col justify-between shadow-sm">
                 <div>
                     <h3 class="font-bold text-stone-400 uppercase tracking-wider text-xs mb-1">Trial Run</h3>
@@ -219,7 +347,6 @@
                 <button class="w-full bg-stone-100 hover:bg-stone-200 text-coffeeDark font-bold py-2.5 rounded-xl text-sm transition-all">Start Free</button>
             </div>
 
-            <!-- 1 Month Tier -->
             <div class="bg-white p-6 rounded-2xl border border-stone-200 flex flex-col justify-between shadow-sm">
                 <div>
                     <h3 class="font-bold text-coffeeBrand uppercase tracking-wider text-xs mb-1">Standard Short Term</h3>
@@ -228,40 +355,33 @@
                     <div class="my-6 border-t border-stone-100 pt-4 space-y-2 text-xs text-stone-600">
                         <p><i class="fa-solid fa-check text-emerald-600 mr-2"></i>Weekly Café Recommendations</p>
                         <p><i class="fa-solid fa-check text-emerald-600 mr-2"></i>Full Seat Choosing Options</p>
-                        <p><i class="fa-solid fa-check text-emerald-600 mr-2"></i>Standard Birthday Reward Tier</p>
                     </div>
                 </div>
                 <button class="w-full bg-coffeeBrand hover:bg-coffeeDark text-white font-bold py-2.5 rounded-xl text-sm transition-all">Select Plan</button>
             </div>
-
-            <!-- 3 Month Tier -->
+            
             <div class="bg-white p-6 rounded-2xl border-2 border-coffeeBrand relative flex flex-col justify-between shadow-md">
                 <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-coffeeBrand text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full">Most Popular Bundle</span>
                 <div class="pt-2">
                     <h3 class="font-bold text-coffeeBrand uppercase tracking-wider text-xs mb-1">Quarterly Value</h3>
                     <h4 class="text-2xl font-extrabold text-coffeeDark">3 Month Plan</h4>
                     <p class="text-xl font-bold text-coffeeBrand mt-2">RM 7 <span class="text-xs text-stone-400 font-normal">/ month</span></p>
-                    <p class="text-[10px] text-stone-400 mt-0.5">RM 21 total billing cycle</p>
                     <div class="my-6 border-t border-stone-100 pt-4 space-y-2 text-xs text-stone-600">
-                        <p><i class="fa-solid fa-check text-emerald-600 mr-2"></i>All Standard Member Privileges</p>
-                        <p><i class="fa-solid fa-check text-emerald-600 mr-2"></i>Enhanced Monthly Dining Vouchers</p>
-                        <p><i class="fa-solid fa-check text-emerald-600 mr-2"></i>Early Access to Seasonal Dishes</p>
+                        <p><i class="fa-solid fa-check text-emerald-600 mr-2"></i>All Privileges Included</p>
+                        <p><i class="fa-solid fa-check text-emerald-600 mr-2"></i>Enhanced Dining Vouchers</p>
                     </div>
                 </div>
                 <button class="w-full bg-coffeeBrand hover:bg-coffeeDark text-white font-bold py-2.5 rounded-xl text-sm transition-all">Select Plan</button>
             </div>
 
-            <!-- Annual Plan Tier -->
             <div class="bg-coffeeDark text-coffeeCream p-6 rounded-2xl flex flex-col justify-between shadow-xl">
                 <div>
                     <h3 class="text-amber-200 uppercase tracking-wider text-xs font-bold mb-1">Ultimate Saver</h3>
                     <h4 class="text-2xl font-extrabold">12 Month Ultimate</h4>
                     <p class="text-xl font-bold text-amber-200 mt-2">RM 5 <span class="text-xs text-stone-300 font-normal">/ month</span></p>
-                    <p class="text-[10px] text-stone-400 mt-0.5">RM 60 total per year</p>
                     <div class="my-6 border-t border-white/10 pt-4 space-y-2 text-xs text-stone-300">
-                        <p><i class="fa-solid fa-bolt text-amber-200 mr-2"></i>Maximum Points Accrual Multiplier</p>
+                        <p><i class="fa-solid fa-bolt text-amber-200 mr-2"></i>Max Points Accrual Multiplier</p>
                         <p><i class="fa-solid fa-check text-amber-200 mr-2"></i>Premium Priority Seat Bookings</p>
-                        <p><i class="fa-solid fa-check text-amber-200 mr-2"></i>Premium Monthly High-Value Packs</p>
                     </div>
                 </div>
                 <button class="w-full bg-white hover:bg-amber-50 text-coffeeDark font-bold py-2.5 rounded-xl text-sm transition-all">Claim Ultimate</button>
@@ -269,7 +389,6 @@
         </div>
     </section>
 
-    <!-- Café Owners B2B Promotion Pricing Section -->
     <section id="owners" class="py-20 bg-coffeeBrand text-white relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
@@ -285,11 +404,9 @@
                     </div>
                 </div>
                 
-                <!-- Pricing Packages Matrix from image_7a7230.jpg & image_7a724f.jpg -->
                 <div class="lg:col-span-7 bg-white text-coffeeDark rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
                     <h3 class="font-bold text-xl text-coffeeBrand border-b pb-4"><i class="fa-solid fa-rectangle-ad mr-2"></i>Targeted Advertising Packages</h3>
                     <div class="space-y-4">
-                        <!-- Package 1 -->
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-stone-50 rounded-xl border border-stone-200/60 gap-2">
                             <div>
                                 <h4 class="font-bold text-sm text-coffeeDark">Main Home Page Featured Placement</h4>
@@ -297,7 +414,6 @@
                             </div>
                             <span class="font-extrabold text-coffeeBrand whitespace-nowrap bg-coffeeBrand/5 px-3 py-1 rounded-lg text-sm">RM 300</span>
                         </div>
-                        <!-- Package 2 -->
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-stone-50 rounded-xl border border-stone-200/60 gap-2">
                             <div>
                                 <h4 class="font-bold text-sm text-coffeeDark">Top Search Tab Priority Injection</h4>
@@ -305,39 +421,20 @@
                             </div>
                             <span class="font-extrabold text-coffeeBrand whitespace-nowrap bg-coffeeBrand/5 px-3 py-1 rounded-lg text-sm">RM 200</span>
                         </div>
-                        <!-- Package 3 -->
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-stone-50 rounded-xl border border-stone-200/60 gap-2">
-                            <div>
-                                <h4 class="font-bold text-sm text-coffeeDark">Weekly Recommendation Spot</h4>
-                                <p class="text-xs text-stone-500">Rotated into elite 5-7 selected cafes for 1 Week duration</p>
-                            </div>
-                            <span class="font-extrabold text-coffeeBrand whitespace-nowrap bg-coffeeBrand/5 px-3 py-1 rounded-lg text-sm">RM 50</span>
-                        </div>
-                        <!-- Package 4 -->
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-stone-50 rounded-xl border border-stone-200/60 gap-2">
-                            <div>
-                                <h4 class="font-bold text-sm text-coffeeDark">Algorithmic Feed Reel Boost</h4>
-                                <p class="text-xs text-stone-500">Guaranteed video placement generation hitting 50 - 100 organic views</p>
-                            </div>
-                            <span class="font-extrabold text-coffeeBrand whitespace-nowrap bg-coffeeBrand/5 px-3 py-1 rounded-lg text-sm">RM 20</span>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer Area -->
     <footer class="bg-coffeeDark text-stone-400 py-12 border-t border-white/5 text-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-6">
             <div class="flex items-center gap-3">
-                <!-- Verbatim Reference to logo file -->
                 <img src="logo.jpeg" alt="Sip & Scroll Logo" class="h-9 w-9 rounded-lg object-cover grayscale opacity-60">
                 <span class="font-bold text-white tracking-tight">Sip & Scroll</span>
             </div>
             <p>© 2026 Sip & Scroll Platform. Built with absolute precision for modern coffee ecosystems.</p>
         </div>
     </footer>
-
 </body>
 </html>
